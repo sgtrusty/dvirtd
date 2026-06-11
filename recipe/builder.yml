@@ -1,0 +1,26 @@
+x-dvirtd:
+  cmdopt: noview,nodir
+
+services:
+  devel-builder:
+    image: ${REGISTRY}/builder:${BUILDER_VERSION}
+    pull_policy: build
+    build:
+      context: .
+      dockerfile: images/builder.dockerfile
+      args:
+        - GIT_AUTHOR_NAME=nobody
+        - GIT_AUTHOR_EMAIL=noone@example.com
+        - BUILD_DATE=20240520
+    user: archlinux
+    environment:
+      - DISPLAY=${APPDISPLAY:-:1}
+      - ENTRY_APP=${ENTRY_APP:-bash}
+      - ENTRY_VARS=${ENTRY_VARS:-}
+      - ENTRY_DIR=${ENTRY_DIR:-/home/archlinux/shared}
+      - PERSIST=${PERSIST:-0}
+      - WINMAG=${WINMAG:-i3}
+    volumes:
+      - ${SHARED_VOLUME:-${PWD}/.tmp/shared}:/home/archlinux/shared
+    restart: always
+    container_name: "devel-builder"

@@ -1,0 +1,26 @@
+x-dvirtd:
+  cmdopt: useview,usedir
+
+services:
+  devel-mirror:
+    image: ${REGISTRY}/mirror:${MIRROR_VERSION}
+    extends:
+      file: builder.yml
+      service: devel-builder
+    build:
+      context: .
+      dockerfile: images/mirror.dockerfile
+      args:
+        - BUILDER_VERSION=${BUILDER_VERSION}
+    environment:
+      - DISPLAY=${APPDISPLAY:-}
+      - ENTRY_APP=${ENTRY_APP:-kitty}
+    ports:
+      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:5173:5173"
+      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:5000:5000"
+      - "127.0.0.1:4173:4173"
+    user: archlinux
+    container_name: "devel-mirror"

@@ -1,0 +1,4 @@
+[ -f ~/.bashext ] && source ~/.bashext
+
+export EDITOR=vim
+export VISUAL=vim

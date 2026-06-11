@@ -1,0 +1,16 @@
+x-dvirtd:
+  cmdopt: useview,usedir
+
+services:
+  devel-javascript:
+    image: ${REGISTRY}/javascript:${JAVASCRIPT_VERSION}
+    extends:
+      file: mirror.yml
+      service: devel-mirror
+    build:
+      context: .
+      dockerfile: images/javascript.dockerfile
+      args:
+        - MIRROR_VERSION=${MIRROR_VERSION}
+    user: archlinux
+    container_name: "devel-javascript"
