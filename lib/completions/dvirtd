@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+_dvirtd_list_images() {
+    local dir="${1:-/opt/dvirtd}"
+    for f in "$dir"/recipe/*.yml; do
+        [[ -f "$f" ]] || continue
+        local base=${f##*/}
+        base=${base%.yml}
+        [[ "$base" == @(template|tailscale-subnet) ]] && continue
+        echo "$base"
+    done
+}
+
+_dvirtd() {
+    local cur prev words cword
+    _init_completion || return
+
+    if [[ $cword -eq 1 ]]; then
+        COMPREPLY=($(compgen -W "run list help" -- "$cur"))
+        return
+    fi
+
+    case "${words[1]}" in
+        run)
+            if [[ $cword -eq 2 ]]; then
+                COMPREPLY=($(compgen -W "$(_dvirtd_list_images)" -- "$cur"))
+            elif [[ $cword -eq 3 ]]; then
+                COMPREPLY=($(compgen -W "choosedir usedir samedir useforce usetemp useview smallview usepersist usemake" -- "$cur"))
+            fi
+            ;;
+    esac
+}
+
+complete -F _dvirtd dvirtd

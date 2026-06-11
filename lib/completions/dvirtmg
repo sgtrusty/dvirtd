@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+_dvirtmg_list_images() {
+    local dir="${1:-/opt/dvirtd}"
+    for f in "$dir"/recipe/*.yml; do
+        [[ -f "$f" ]] || continue
+        local base=${f##*/}
+        base=${base%.yml}
+        [[ "$base" == @(template|tailscale-subnet) ]] && continue
+        echo "$base"
+    done
+}
+
+_dvirtmg_outdated_images() {
+    local dir="${1:-/opt/dvirtd}"
+    local ini="$dir/version.ini"
+    [[ -f "$ini" ]] || return
+    awk -F= '
+        /^\[.*\]/ { section=substr($0,2,length($0)-2); state="" }
+        /^state[[:space:]]*=/ { state=$2; sub(/^[[:space:]]+/, "", state); sub(/[[:space:]]+$/, "", state) }
+        section != "meta" && (state == "outdated" || state == "pending") { print section }
+    ' "$ini"
+}
+
+_dvirtmg() {
+    local cur prev words cword
+    _init_completion || return
+
+    if [[ $cword -eq 1 ]]; then
+        COMPREPLY=($(compgen -W "list current outdated build bump purge" -- "$cur"))
+        return
+    fi
+
+    case "${words[1]}" in
+        build|bump)
+            if [[ $cword -eq 2 ]]; then
+                COMPREPLY=($(compgen -W "$(_dvirtmg_list_images)" -- "$cur"))
+            elif [[ $cword -eq 3 ]]; then
+                COMPREPLY=($(compgen -W "patch minor major" -- "$cur"))
+            fi
+            ;;
+        current|purge)
+            if [[ $cword -eq 2 ]]; then
+                COMPREPLY=($(compgen -W "$(_dvirtmg_list_images)" -- "$cur"))
+            fi
+            ;;
+        outdated)
+            if [[ $cword -eq 2 ]]; then
+                COMPREPLY=($(compgen -W "--fix $(_dvirtmg_list_images)" -- "$cur"))
+            elif [[ " ${words[*]} " == *" --fix "* ]]; then
+                COMPREPLY=($(compgen -W "$(_dvirtmg_outdated_images)" -- "$cur"))
+            else
+                COMPREPLY=($(compgen -W "$(_dvirtmg_list_images)" -- "$cur"))
+            fi
+            ;;
+    esac
+}
+
+complete -F _dvirtmg dvirtmg
