@@ -1,4 +1,4 @@
-# arch-safecode
+# dvirtd
 
 Docker-based development environment manager. Launches containerized dev
 environments with X11/Wayland integration, persistent volumes, and image

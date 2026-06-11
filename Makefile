@@ -1,5 +1,4 @@
-# ── arch-safecode Makefile — install / uninstall / check ──────────────────
-# Scripts self-locate via `dirname "$0"` — no IMPORT_DIR needed here.
+# ── dvirtd Makefile — install / uninstall / check ─────────────────────────
 # Orchestration: bin/dvirtd.sh  |  Build/version mgmt: bin/dvirtmg.sh
 
 DVIRTD := /opt/dvirtd
