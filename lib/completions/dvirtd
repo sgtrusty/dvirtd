@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
 _dvirtd_list_images() {
-    local dir="${1:-/opt/dvirtd}"
-    for f in "$dir"/recipe/*.yml; do
+    local dir
+    if [[ -n "${DVIRTD_RECIPE_DIR:-}" ]]; then
+        dir="$DVIRTD_RECIPE_DIR"
+    else
+        dir="${1:-/opt/dvirtd}/recipe"
+    fi
+    for f in "$dir"/*.yml; do
         [[ -f "$f" ]] || continue
         local base=${f##*/}
         base=${base%.yml}
