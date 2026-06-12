@@ -28,7 +28,7 @@ orc_compose_file() {
     local ver reg
     ver="$(orc_resolve_version "$image" || echo 0.0.1)"
     reg="$(orc_resolve_registry || echo dvirtd)"
-    IMAGE="$image" VERSION="$ver" REGISTRY="$reg" envsubst <"$RECIPE_DIR/template.yml" >"$tmp"
+    IMAGE="$image" VERSION="$ver" REGISTRY="$reg" RECIPE_DIR="$RECIPE_DIR" envsubst <"$RECIPE_DIR/template.yml" >"$tmp"
     echo "$tmp"
 }
 

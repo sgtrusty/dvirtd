@@ -5,10 +5,10 @@ services:
   devel-${IMAGE}:
     image: ${REGISTRY}/${IMAGE}:${VERSION}
     extends:
-      file: mirror.yml
+      file: ${RECIPE_DIR}/mirror.yml
       service: devel-mirror
     build:
-      context: .
+      context: ${RECIPE_DIR}
       dockerfile: images/${IMAGE}.dockerfile
       args:
         - MIRROR_VERSION=${MIRROR_VERSION}
