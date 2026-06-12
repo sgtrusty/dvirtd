@@ -52,9 +52,9 @@ orc_up() {
     if [[ "$detached" != "false" ]]; then
         eval "$env_vars docker-compose -f \"$compose_file\" up --force-recreate -V -d devel-$image"
     elif [[ -n "$pipein" ]]; then
-        eval "$env_vars docker-compose -f \"$compose_file\" run -T -i --rm ${XEPHYR_MOUNT:-} devel-$image \"arch-entry\" < \"$pipein\""
+        eval "$env_vars docker-compose -f \"$compose_file\" run -T -i --rm --service-ports ${XEPHYR_MOUNT:-} devel-$image \"arch-entry\" < \"$pipein\""
     else
-        eval "$env_vars docker-compose -f \"$compose_file\" run --rm ${XEPHYR_MOUNT:-} devel-$image \"arch-entry\""
+        eval "$env_vars docker-compose -f \"$compose_file\" run --rm --service-ports ${XEPHYR_MOUNT:-} devel-$image \"arch-entry\""
     fi
 }
 
