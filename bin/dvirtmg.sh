@@ -329,10 +329,18 @@ cmd_build() {
     local ver reg
     ver="$(version_current "$section" || true)"
     reg="$(version_registry)"
-    [[ -z "${ver:-}" ]] && {
-        MSG_NOK "Unknown image: ${YELLOW}${section}${RESET}"
-        return 1
-    }
+    if [[ -z "${ver:-}" ]]; then
+        if [[ -f "$RECIPE_DIR/${section}.yml" ]]; then
+            MSG_INFO "${section}.yml found in recipe dir — refreshing version.ini"
+            generate_version_ini
+            source "$IMPORT_DIR/lib/includes/versions.sh"
+            ver="$(version_current "$section" || true)"
+        fi
+        [[ -z "${ver:-}" ]] && {
+            MSG_NOK "Unknown image: ${YELLOW}${section}${RESET}"
+            return 1
+        }
+    fi
 
     # First build (0.0.0): auto-bump to 0.0.1 so version.ini + docker tag align.
     if [[ "$ver" == "0.0.0" ]]; then
