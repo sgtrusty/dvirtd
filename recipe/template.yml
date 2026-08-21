@@ -1,5 +1,6 @@
 x-dvirtd:
   cmdopt: useview,usedir
+  ports: 3000,5000
 
 services:
   devel-${IMAGE}:

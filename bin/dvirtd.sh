@@ -41,6 +41,8 @@ show_help() {
     echo "  smallview     Launch in 1024x768 Xephyr (default: 1920x1280)"
     echo "  usepersist    Persist container filesystem across runs"
     echo "  usemake       Override entry-app to 'make'"
+    echo "  noports       Don't publish host ports (skip reservation + --service-ports)"
+    echo "  useport[N]    Anchor published ports at N as a contiguous free block (default: 3000)"
     echo
     MSG "Overrides:"
     echo "  CMDOPT arg            Override x-dvirtd.cmdopt"
@@ -202,6 +204,20 @@ if [[ "$CMDOPT" == *"usemake"* ]]; then
     ENTRY_APP="make"
 fi
 
+NOPORTS=false
+if [[ "$CMDOPT" == *"noports"* ]]; then
+    NOPORTS=true
+fi
+
+if [[ "$CMDOPT" =~ useport([0-9]*) ]]; then
+    if [[ "$NOPORTS" == "true" ]]; then
+        MSG_NOK "cmdopt conflict: noports and useport are mutually exclusive"
+        exit 1
+    fi
+    export DVIRTD_PORT_BASE="${BASH_REMATCH[1]:-3000}"
+    MSG_INFO "Anchoring published ports at ${DVIRTD_PORT_BASE}"
+fi
+
 # ── launch ───────────────────────────────────────────────────────────────
 
 export SHARED_VOLUME="${SHARED_VOLUME:=}"
@@ -226,4 +242,4 @@ if [[ "$CMDOPT" == *"useview"* || "$CMDOPT" == *"smallview"* ]]; then
 fi
 
 MSG_INFO "Running: ${IMAGE}"
-orc_up "$IMAGE"
+orc_up "$IMAGE" false "" "$NOPORTS"

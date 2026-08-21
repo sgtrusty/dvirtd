@@ -2,6 +2,7 @@
 
 source "$IMPORT_DIR/lib/includes/logging.sh"
 source "$IMPORT_DIR/lib/includes/versions.sh"
+source "$IMPORT_DIR/lib/ports.sh"
 
 orc_resolve_version() {
     local image="${1:-builder}" ini="${2:-$VERSION_INI}"
@@ -15,20 +16,30 @@ orc_resolve_registry() {
         grep '^registry' | sed 's/.*=\s*//'
 }
 
-# Echoes the compose file path; generates from template if no dedicated YML.
+# Echoes a launch-ready compose file path. Dedicated YMLs are copied to
+# .tmp/ (recipe-relative paths absolutized) so runtime edits never touch
+# committed recipes; images without a dedicated YML are generated from
+# template.yml. Pass inject=true to reserve and inject host ports.
 orc_compose_file() {
-    local image="$1"
-    local yml="$RECIPE_DIR/${image}.yml"
-    if [[ -f "$yml" ]]; then
-        echo "$yml"
-        return 0
-    fi
+    local image="$1" inject="${2:-false}"
+    local src="$RECIPE_DIR/${image}.yml"
     local tmp="$IMPORT_DIR/.tmp/running.yml"
     mkdir -p "$(dirname "$tmp")"
-    local ver reg
-    ver="$(orc_resolve_version "$image" || echo 0.0.1)"
-    reg="$(orc_resolve_registry || echo dvirtd)"
-    IMAGE="$image" VERSION="$ver" REGISTRY="$reg" RECIPE_DIR="$RECIPE_DIR" envsubst <"$RECIPE_DIR/template.yml" >"$tmp"
+    if [[ -f "$src" ]]; then
+        cp "$src" "$tmp"
+        sed -E -i \
+            -e "s|^([[:space:]]*file:[[:space:]]*)([^[:space:]$/][^[:space:]]*)|\1${RECIPE_DIR}/\2|" \
+            -e "s|^([[:space:]]*context:[[:space:]]*)\.([[:space:]]*)\$|\1${RECIPE_DIR}\2|" \
+            "$tmp"
+    else
+        local ver reg
+        ver="$(orc_resolve_version "$image" || echo 0.0.1)"
+        reg="$(orc_resolve_registry || echo dvirtd)"
+        IMAGE="$image" VERSION="$ver" REGISTRY="$reg" RECIPE_DIR="$RECIPE_DIR" envsubst <"$RECIPE_DIR/template.yml" >"$tmp"
+    fi
+    if [[ "$inject" == "true" ]] && ! port_inject "$tmp" >&2; then
+        return 1
+    fi
     echo "$tmp"
 }
 
@@ -44,17 +55,24 @@ orc_build() {
 }
 
 orc_up() {
-    local image="$1" compose_file detached="${2:-false}" pipein="${3:-}"
-    compose_file="$(orc_compose_file "$image")"
+    local image="$1" compose_file detached="${2:-false}" pipein="${3:-}" noports="${4:-false}"
+    local inject=false
+    [[ "$noports" != "true" ]] && inject=true
+    compose_file="$(orc_compose_file "$image" "$inject")" || {
+        MSG_NOK "Port reservation failed — aborting launch"
+        return 1
+    }
+    local svc_ports="--service-ports"
+    [[ "$noports" == "true" ]] && svc_ports=""
     local env_vars
     env_vars=$(env_assemble)
     MSG "Running docker-compose"
     if [[ "$detached" != "false" ]]; then
-        eval "$env_vars docker-compose -f \"$compose_file\" up --force-recreate -V -d devel-$image"
+        eval "$env_vars docker-compose --project-directory \"$RECIPE_DIR\" -f \"$compose_file\" up --force-recreate -V -d devel-$image"
     elif [[ -n "$pipein" ]]; then
-        eval "$env_vars docker-compose -f \"$compose_file\" run -T -i --rm --service-ports ${XEPHYR_MOUNT:-} devel-$image \"arch-entry\" < \"$pipein\""
+        eval "$env_vars docker-compose --project-directory \"$RECIPE_DIR\" -f \"$compose_file\" run -T -i --rm $svc_ports ${XEPHYR_MOUNT:-} devel-$image \"arch-entry\" < \"$pipein\""
     else
-        eval "$env_vars docker-compose -f \"$compose_file\" run --rm --service-ports ${XEPHYR_MOUNT:-} devel-$image \"arch-entry\""
+        eval "$env_vars docker-compose --project-directory \"$RECIPE_DIR\" -f \"$compose_file\" run --rm $svc_ports ${XEPHYR_MOUNT:-} devel-$image \"arch-entry\""
     fi
 }
 
