@@ -5,8 +5,9 @@
 #
 # Two resolution modes:
 #   default            — per-port preference: P if free, else next free ≥ P
-#   DVIRTD_PORT_BASE=N — anchored block: declared ports map onto the first
-#                        free contiguous run starting at N (useport[N] cmdopt)
+#   DVIRTD_PORT_BASE=N — anchored block: identity-mapped ports (W:W) laid
+#                        onto the first free contiguous run starting at N
+#                        (useport[N] cmdopt)
 
 PORTS_TAKEN=""
 
@@ -76,7 +77,7 @@ port_inject() {
                 return 1
             }
             cursor=$((want + 1))
-            MSG_INFO "container $p → host $want (block from $base)"
+            MSG_INFO "container $want → host $want (block from $base)"
         else
             want="$(port_claim "$p")" || {
                 MSG_NOK "No free port ≥ $p"
@@ -89,7 +90,7 @@ port_inject() {
             fi
         fi
         PORTS_TAKEN+=" $want"
-        lines+=("      - \"127.0.0.1:${want}:${p}\"")
+        lines+=("      - \"127.0.0.1:${want}:${want}\"")
     done
     ((${#lines[@]})) || return 0
     {

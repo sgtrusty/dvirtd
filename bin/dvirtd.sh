@@ -42,7 +42,7 @@ show_help() {
     echo "  usepersist    Persist container filesystem across runs"
     echo "  usemake       Override entry-app to 'make'"
     echo "  noports       Don't publish host ports (skip reservation + --service-ports)"
-    echo "  useport[N]    Anchor published ports at N as a contiguous free block (default: 3000)"
+    echo "  useport[N]    Anchor published ports at N as an identity-mapped (W:W) contiguous free block (default: 3000)"
     echo
     MSG "Overrides:"
     echo "  CMDOPT arg            Override x-dvirtd.cmdopt"
