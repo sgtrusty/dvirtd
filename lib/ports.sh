@@ -50,7 +50,9 @@ port_claim() {
 # block to it. Falls back through one extends: file: hop when the yml has
 # no declaration.
 port_inject() {
-    local yml="$1" decl p want ext dir base="${DVIRTD_PORT_BASE:-}" cursor
+local yml="$1" decl p want ext dir base="${DVIRTD_PORT_BASE:-}" cursor
+    PORT=""
+    DVIRTD_PORTS=""
     decl="$(yml_xget "$yml" ports)"
     if [[ -z "$decl" ]]; then
         ext="$(sed -n '/extends:/,/^[a-z#]/p' "$yml" 2>/dev/null |
@@ -64,7 +66,7 @@ port_inject() {
         MSG_INFO "No ports declared for ${yml##*/} — skipping reservation"
         return 0
     }
-    PORTS_TAKEN=""
+PORTS_TAKEN=""
     cursor="$base"
     local lines=()
     local IFS=','
@@ -90,6 +92,9 @@ port_inject() {
             fi
         fi
         PORTS_TAKEN+=" $want"
+        [[ -z "$PORT" ]] && PORT="$want"
+        [[ -n "$DVIRTD_PORTS" ]] && DVIRTD_PORTS+=" "
+        DVIRTD_PORTS+="$want"
         lines+=("      - \"127.0.0.1:${want}:${want}\"")
     done
     ((${#lines[@]})) || return 0

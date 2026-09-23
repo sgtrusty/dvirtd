@@ -37,9 +37,6 @@ orc_compose_file() {
         reg="$(orc_resolve_registry || echo dvirtd)"
         IMAGE="$image" VERSION="$ver" REGISTRY="$reg" RECIPE_DIR="$RECIPE_DIR" envsubst <"$RECIPE_DIR/template.yml" >"$tmp"
     fi
-    if [[ "$inject" == "true" ]] && ! port_inject "$tmp" >&2; then
-        return 1
-    fi
     echo "$tmp"
 }
 
@@ -58,7 +55,11 @@ orc_up() {
     local image="$1" compose_file detached="${2:-false}" pipein="${3:-}" noports="${4:-false}"
     local inject=false
     [[ "$noports" != "true" ]] && inject=true
-    compose_file="$(orc_compose_file "$image" "$inject")" || {
+    compose_file="$(orc_compose_file "$image" false)" || {
+        MSG_NOK "Port reservation failed — aborting launch"
+        return 1
+    }
+    [[ "$inject" == "true" ]] && port_inject "$compose_file" >&2 || {
         MSG_NOK "Port reservation failed — aborting launch"
         return 1
     }

@@ -20,6 +20,8 @@ services:
       - ENTRY_DIR=${ENTRY_DIR:-/home/archlinux/shared}
       - PERSIST=${PERSIST:-0}
       - WINMAG=${WINMAG:-i3}
+      - PORT=${PORT:-}
+      - DVIRTD_PORTS=${DVIRTD_PORTS:-}
     volumes:
       - ${SHARED_VOLUME:-${PWD}/.tmp/shared}:/home/archlinux/shared
     restart: always
